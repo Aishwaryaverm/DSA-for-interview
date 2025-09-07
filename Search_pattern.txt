@@ -1,0 +1,93 @@
+Search-Pattern:-
+“Suppose I give you a string txt of length n and a pattern pat of length m. I want you to find all the starting indices where the pattern occurs in the text. How would you approach this problem?”
+
+You (candidate):
+“Well, first I’ll think of the naive approach. For every index in txt, I can check character by character if the substring matches pat.
+
+Time complexity: O(n * m) in the worst case (like txt = "aaaaa..." and pat = "aaa...").
+
+Space complexity: O(1)
+
+This works but is too slow for large strings.”
+
+Interviewer:
+“Good, what’s a better way?”
+
+You:
+“There are optimized algorithms. Let me list a few and then pick one to implement:
+
+Rabin–Karp
+
+Use rolling hash to check substrings quickly.
+
+Avg case O(n+m), worst case O(n*m) (if many hash collisions).
+
+Knuth–Morris–Pratt (KMP)
+
+Preprocess pat into an LPS (longest prefix suffix) array.
+
+Then scan txt in O(n) time without backtracking.
+
+Space O(m).
+
+Z-algorithm
+
+Concatenate pat + "$" + txt and build Z-array.
+
+Wherever Z[i] == m, that’s a match.
+
+Time: O(n+m)
+
+In interviews, KMP is the most standard and expected answer because it avoids hash collisions and guarantees linear time.”
+
+Interviewer:
+“Great, can you explain KMP in detail?”
+
+You:
+“Sure. KMP has two phases:
+
+Preprocessing (build LPS array):
+
+lps[i] = the longest proper prefix of pat[0..i] which is also a suffix.
+
+Example: for pat = "ababaca", lps = [0,0,1,2,3,0,1].
+
+Searching:
+
+Traverse txt and compare with pat.
+
+If a mismatch occurs at index j of pattern, don’t restart from 0; instead, jump using lps[j-1].
+
+This ensures we never re-check characters.
+
+Thus, time complexity is O(n+m). Space O(m) for the LPS array.”
+
+Interviewer:
+“Okay, can you write the code?”
+class Solution {
+public:
+    vector<int> search(string pat, string txt) {
+        int m = pat.size(), n = txt.size();
+        vector<int> lps(m, 0), ans;
+        
+        // Build LPS
+        for (int i=1, len=0; i<m; ) {
+            if (pat[i] == pat[len]) lps[i++] = ++len;
+            else if (len) len = lps[len-1];
+            else lps[i++] = 0;
+        }
+        
+        // Search
+        for (int i=0, j=0; i<n; ) {
+            if (txt[i] == pat[j]) { i++; j++; }
+            if (j == m) {
+                ans.push_back(i-j); // match found
+                j = lps[j-1];
+            } else if (i<n && txt[i] != pat[j]) {
+                if (j) j = lps[j-1];
+                else i++;
+            }
+        }
+        return ans;
+    }
+};
